@@ -1,8 +1,7 @@
 name: build-android-apk
 
-# 手动触发 & 推送 tag 都可以触发
 on:
-  workflow_dispatch:   # 手动触发
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -11,29 +10,25 @@ jobs:
   build-android:
     runs-on: ubuntu-22.04
     permissions:
-      contents: read  # 不上传 Release，不需要写权限
+      contents: read
     steps:
-      # 1️⃣ 签出代码
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: master
 
-      # 2️⃣ 设置 Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.x"
           cache: true
 
-      # 3️⃣ Flutter 预缓存 & pub get
       - name: Flutter pre-cache & pub get
         run: |
           cd simple_live_app
           flutter pub get
           flutter precache
 
-      # 4️⃣ 缓存 Gradle
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
@@ -42,13 +37,11 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      # 5️⃣ Build APK
       - name: Build APK
         run: |
           cd simple_live_app
           flutter build apk --release --split-per-abi
 
-      # 6️⃣ 上传 APK 到 Artifacts（方便下载）
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -58,5 +51,4 @@ jobs:
             simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
 
-      # 7️⃣ 打印完成状态
       - run: echo "🍏 Android APK build job finished: ${{ job.status }}"
