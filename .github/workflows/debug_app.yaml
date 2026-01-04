@@ -1,0 +1,53 @@
+name: android-apk-build
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+  
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 签出代码
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      # 2. 设置 Java（Android 构建需要）
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+
+      # 3. 设置 Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.x"
+          cache: true
+
+      # 4. 获取依赖
+      - name: Restore packages
+        run: |
+          cd simple_live_app
+          flutter pub get
+
+      # 5. 构建 APK（debug，无需 keystore）
+      - name: Build Android APK (debug)
+        run: |
+          cd simple_live_app
+          flutter build apk --debug
+
+      # 6. 上传 APK 到 Artifacts
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: simple_live_app/build/app/outputs/flutter-apk/app-debug.apk
+
+      # 7. 完成提示
+      - run: echo "✅ Android APK build finished"
