@@ -1,34 +1,47 @@
 name: build-android-apk
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # 支持手动触发
   push:
     tags:
-      - "v*"
+      - "v*"          # 推送 v* 标签触发
 
 jobs:
   build-android:
     runs-on: ubuntu-22.04
     permissions:
       contents: read
+
     steps:
+      # 1️⃣ 签出代码
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: master
 
+      # 2️⃣ 安装 Java 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"  # 也可以用 zulu
+          java-version: "17"
+          cache: gradle
+
+      # 3️⃣ 设置 Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.38.x"
           cache: true
 
+      # 4️⃣ Flutter pre-cache & pub get
       - name: Flutter pre-cache & pub get
         run: |
           cd simple_live_app
           flutter pub get
           flutter precache
 
+      # 5️⃣ Gradle 缓存
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
@@ -37,11 +50,13 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
+      # 6️⃣ 构建 APK
       - name: Build APK
         run: |
           cd simple_live_app
           flutter build apk --release --split-per-abi
 
+      # 7️⃣ 上传 APK 到 Artifacts
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -51,4 +66,5 @@ jobs:
             simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
 
+      # 8️⃣ 构建完成提示
       - run: echo "🍏 Android APK build job finished."
