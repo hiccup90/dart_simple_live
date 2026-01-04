@@ -51,4 +51,5 @@ jobs:
             simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
 
-      - run: echo "🍏 Android APK build job finished: ${{ job.status }}"
+      - name: Build job finished
+        run: echo "🍏 Android APK build job finished: ${{ job.status }}"
